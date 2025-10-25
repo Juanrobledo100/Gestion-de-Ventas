@@ -1,0 +1,23 @@
+{
+  "name": "gestion-ventas-backend",
+  "version": "1.0.0",
+  "description": "Backend para proyecto de gestión de ventas - Node.js + Express + Mongoose",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "seed": "node src/seed/seed.js"
+  },
+  "author": "Alumno",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2",
+    "faker": "^5.5.3",
+    "mongoose": "^6.10.0"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.22"
+  }
+}
