@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
-import { Users, Plus, Edit, Trash2, Save, X, Mail, Phone, MapPin } from 'lucide-react';
+import { Tag, Plus, Edit, Trash2, Save, X } from 'lucide-react';
 
 const API_URL = 'http://localhost:5000/api';
 
-const Clientes = ({ clientes, cargarDatos }) => {
+const Categorias = ({ categorias, productos, cargarDatos }) => {
   const [showModal, setShowModal] = useState(false);
   const [modalType, setModalType] = useState('add');
   const [formData, setFormData] = useState({});
 
-  const abrirModal = (tipo, cliente = null) => {
+  const abrirModal = (tipo, categoria = null) => {
     setModalType(tipo);
-    setFormData(cliente || { nombre: '', email: '', telefono: '', direccion: '' });
+    setFormData(categoria || { nombre: '', descripcion: '' });
     setShowModal(true);
   };
 
@@ -18,8 +18,8 @@ const Clientes = ({ clientes, cargarDatos }) => {
     e.preventDefault();
     try {
       const url = modalType === 'add' 
-        ? `${API_URL}/clientes` 
-        : `${API_URL}/clientes/${formData._id}`;
+        ? `${API_URL}/categorias` 
+        : `${API_URL}/categorias/${formData._id}`;
       
       const response = await fetch(url, {
         method: modalType === 'add' ? 'POST' : 'PUT',
@@ -30,218 +30,119 @@ const Clientes = ({ clientes, cargarDatos }) => {
       if (response.ok) {
         await cargarDatos();
         setShowModal(false);
-        alert(`Cliente ${modalType === 'add' ? 'agregado' : 'actualizado'} exitosamente`);
+        alert(`Categoría ${modalType === 'add' ? 'agregada' : 'actualizada'} exitosamente`);
       }
     } catch (error) {
       console.error('Error:', error);
-      alert('Error al guardar cliente');
+      alert('Error al guardar categoría');
     }
   };
 
-  const eliminarCliente = async (id) => {
-    if (!window.confirm('¿Estás seguro de eliminar este cliente?')) return;
+  const eliminarCategoria = async (id) => {
+    if (!window.confirm('¿Estás seguro de eliminar esta categoría?')) return;
     try {
-      const response = await fetch(`${API_URL}/clientes/${id}`, { method: 'DELETE' });
+      const response = await fetch(`${API_URL}/categorias/${id}`, { method: 'DELETE' });
       if (response.ok) {
         await cargarDatos();
-        alert('Cliente eliminado exitosamente');
+        alert('Categoría eliminada exitosamente');
       }
     } catch (error) {
       console.error('Error:', error);
-      alert('Error al eliminar cliente');
+      alert('Error al eliminar categoría');
     }
   };
 
   return (
     <>
-      <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-        {/* Header responsive */}
-        <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-gray-200 bg-gradient-to-r from-blue-500 to-blue-600 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0">
-          <h3 className="text-xl sm:text-2xl font-bold text-white flex items-center">
-            <Users className="mr-2 sm:mr-3" size={20} />
-            <span className="hidden sm:inline">Listado de Clientes</span>
-            <span className="sm:hidden">Clientes</span>
-          </h3>
-          <button
-            onClick={() => abrirModal('add')}
-            className="bg-white text-blue-600 px-3 sm:px-4 py-2 rounded-lg font-semibold hover:bg-blue-50 flex items-center text-sm sm:text-base w-full sm:w-auto justify-center"
-          >
-            <Plus className="mr-2" size={18} />
-            Agregar Cliente
-          </button>
-        </div>
-
-        {/* Vista de TARJETAS para móvil */}
-        <div className="md:hidden">
-          {clientes.length === 0 ? (
-            <div className="text-center py-12 text-gray-500">
-              <Users size={48} className="mx-auto mb-4 text-gray-400" />
-              <p className="text-sm">No hay clientes registrados</p>
-            </div>
-          ) : (
-            <div className="p-4 space-y-4">
-              {clientes.map((cliente) => (
-                <div
-                  key={cliente._id}
-                  className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow"
-                >
-                  {/* Nombre */}
-                  <div className="mb-3">
-                    <h4 className="font-bold text-gray-900 text-lg mb-2">
-                      {cliente.nombre}
-                    </h4>
-                  </div>
-
-                  {/* Detalles con iconos */}
-                  <div className="space-y-2 mb-3 text-sm">
-                    {cliente.email && (
-                      <div className="flex items-center text-gray-600">
-                        <Mail size={16} className="mr-2 text-blue-500 flex-shrink-0" />
-                        <span className="truncate">{cliente.email}</span>
-                      </div>
-                    )}
-                    {cliente.telefono && (
-                      <div className="flex items-center text-gray-600">
-                        <Phone size={16} className="mr-2 text-blue-500 flex-shrink-0" />
-                        <span>{cliente.telefono}</span>
-                      </div>
-                    )}
-                    {cliente.direccion && (
-                      <div className="flex items-start text-gray-600">
-                        <MapPin size={16} className="mr-2 text-blue-500 flex-shrink-0 mt-0.5" />
-                        <span className="flex-1">{cliente.direccion}</span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Botones de acción */}
-                  <div className="flex gap-2 pt-3 border-t border-gray-100">
-                    <button
-                      onClick={() => abrirModal('edit', cliente)}
-                      className="flex-1 bg-blue-50 text-blue-600 py-2 rounded-lg hover:bg-blue-100 flex items-center justify-center font-semibold text-sm"
-                    >
-                      <Edit size={16} className="mr-2" />
-                      Editar
-                    </button>
-                    <button
-                      onClick={() => eliminarCliente(cliente._id)}
-                      className="flex-1 bg-red-50 text-red-600 py-2 rounded-lg hover:bg-red-100 flex items-center justify-center font-semibold text-sm"
-                    >
-                      <Trash2 size={16} className="mr-2" />
-                      Eliminar
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Vista de TABLA para desktop */}
-        <div className="hidden md:block overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Nombre</th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Email</th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Teléfono</th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Dirección</th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Acciones</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {clientes.map((cliente) => (
-                <tr key={cliente._id} className="hover:bg-blue-50 transition-colors">
-                  <td className="px-6 py-4 text-sm font-semibold text-gray-900">{cliente.nombre}</td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{cliente.email}</td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{cliente.telefono}</td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{cliente.direccion}</td>
-                  <td className="px-6 py-4 text-sm flex gap-2">
-                    <button 
-                      onClick={() => abrirModal('edit', cliente)} 
-                      className="text-blue-600 hover:text-blue-800"
-                      title="Editar"
-                    >
-                      <Edit size={18} />
-                    </button>
-                    <button 
-                      onClick={() => eliminarCliente(cliente._id)} 
-                      className="text-red-600 hover:text-red-800"
-                      title="Eliminar"
-                    >
-                      <Trash2 size={18} />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-
-          {clientes.length === 0 && (
-            <div className="text-center py-12 text-gray-500">
-              <Users size={48} className="mx-auto mb-4 text-gray-400" />
-              <p className="text-base">No hay clientes registrados</p>
-            </div>
-          )}
-        </div>
+      <div className="mb-6 flex justify-end">
+        <button
+          onClick={() => abrirModal('add')}
+          className="bg-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-purple-700 flex items-center shadow-lg"
+        >
+          <Plus className="mr-2" size={20} />
+          Agregar Categoría
+        </button>
       </div>
 
-      {/* Modal responsive */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {categorias.map((categoria) => {
+          // 🔹 Filtrar productos correctamente
+          const productosCat = productos.filter(p => p.categoria?._id === categoria._id);
+          const totalProductos = productosCat.length;
+
+          return (
+            <div key={categoria._id} className="bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow border-t-4 border-purple-500">
+              <div className="flex items-center justify-between mb-4">
+                <div className="bg-purple-100 rounded-full p-4">
+                  <Tag className="w-8 h-8 text-purple-600" />
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={() => abrirModal('edit', categoria)} className="text-blue-600 hover:text-blue-800">
+                    <Edit size={20} />
+                  </button>
+                  <button onClick={() => eliminarCategoria(categoria._id)} className="text-red-600 hover:text-red-800">
+                    <Trash2 size={20} />
+                  </button>
+                </div>
+              </div>
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="text-xl font-bold text-gray-900">{categoria.nombre}</h4>
+                <span className="text-4xl font-bold text-purple-600">{totalProductos}</span>
+              </div>
+              <p className="text-sm text-gray-600 mb-4">{categoria.descripcion || 'Sin descripción'}</p>
+              
+              {totalProductos > 0 && (
+                <div className="border-t pt-4">
+                  <p className="text-xs font-semibold text-gray-500 mb-2">Productos:</p>
+                  <div className="space-y-1 max-h-32 overflow-y-auto">
+                    {productosCat.slice(0, 5).map(prod => (
+                      <div key={prod._id} className="text-xs text-gray-700 flex justify-between">
+                        <span>{prod.nombre}</span>
+                        <span className="font-semibold text-green-600">${prod.precioUnitario?.toFixed(2)}</span>
+                      </div>
+                    ))}
+                    {totalProductos > 5 && (
+                      <p className="text-xs text-gray-500 italic">...y {totalProductos - 5} más</p>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg p-6 sm:p-8 max-w-md w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-4 sm:mb-6">
-              <h2 className="text-xl sm:text-2xl font-bold">
-                {modalType === 'add' ? 'Agregar' : 'Editar'} Cliente
-              </h2>
-              <button 
-                onClick={() => setShowModal(false)} 
-                className="text-gray-500 hover:text-gray-700 p-1"
-              >
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-8 max-w-md w-full">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold">{modalType === 'add' ? 'Agregar' : 'Editar'} Categoría</h2>
+              <button onClick={() => setShowModal(false)} className="text-gray-500 hover:text-gray-700">
                 <X size={24} />
               </button>
             </div>
             <form onSubmit={handleSubmit}>
               <input
-                placeholder="Nombre completo"
+                placeholder="Nombre de la categoría"
                 value={formData.nombre}
                 onChange={(e) => setFormData({...formData, nombre: e.target.value})}
-                className="w-full mb-3 sm:mb-4 p-2.5 sm:p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
+                className="w-full mb-4 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                 required
               />
-              <input
-                type="email"
-                placeholder="Email"
-                value={formData.email}
-                onChange={(e) => setFormData({...formData, email: e.target.value})}
-                className="w-full mb-3 sm:mb-4 p-2.5 sm:p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
-                required
+              <textarea
+                placeholder="Descripción (opcional)"
+                value={formData.descripcion}
+                onChange={(e) => setFormData({...formData, descripcion: e.target.value})}
+                className="w-full mb-4 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                rows="4"
               />
-              <input
-                placeholder="Teléfono"
-                value={formData.telefono}
-                onChange={(e) => setFormData({...formData, telefono: e.target.value})}
-                className="w-full mb-3 sm:mb-4 p-2.5 sm:p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
-              />
-              <input
-                placeholder="Dirección"
-                value={formData.direccion}
-                onChange={(e) => setFormData({...formData, direccion: e.target.value})}
-                className="w-full mb-4 sm:mb-6 p-2.5 sm:p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
-              />
-              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-                <button 
-                  type="submit" 
-                  className="flex-1 bg-blue-600 text-white py-2.5 sm:py-3 rounded-lg hover:bg-blue-700 flex items-center justify-center font-semibold text-sm sm:text-base"
-                >
+              <div className="flex gap-4">
+                <button type="submit" className="flex-1 bg-purple-600 text-white py-3 rounded-lg hover:bg-purple-700 flex items-center justify-center font-semibold">
                   <Save className="mr-2" size={18} />
                   Guardar
                 </button>
-                <button 
-                  type="button" 
-                  onClick={() => setShowModal(false)} 
-                  className="flex-1 bg-gray-300 text-gray-700 py-2.5 sm:py-3 rounded-lg hover:bg-gray-400 font-semibold text-sm sm:text-base"
-                >
+                <button type="button" onClick={() => setShowModal(false)} className="flex-1 bg-gray-300 text-gray-700 py-3 rounded-lg hover:bg-gray-400 font-semibold">
                   Cancelar
                 </button>
               </div>
@@ -253,4 +154,4 @@ const Clientes = ({ clientes, cargarDatos }) => {
   );
 };
 
-export default Clientes;
+export default Categorias;
