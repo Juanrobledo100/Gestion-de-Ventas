@@ -1,9 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ShoppingCart, Plus, Edit, Trash2, Save, X, Minus, PlusCircle, Calendar, User, Package as PackageIcon, DollarSign, Search, SlidersHorizontal, XCircle, Tag } from 'lucide-react';
 
 const API_URL = 'http://localhost:5000/api';
 
-const Ventas = ({ ventas, clientes, productos, cargarDatos }) => {
+const Ventas = () => {
+  const [ventas, setVentas] = useState([]);
+  const [clientes, setClientes] = useState([]);
+  const [productos, setProductos] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [modalType, setModalType] = useState('add');
   const [formData, setFormData] = useState({});
@@ -20,16 +24,42 @@ const Ventas = ({ ventas, clientes, productos, cargarDatos }) => {
     montoMax: ''
   });
 
+  useEffect(() => {
+    cargarDatos();
+  }, []);
+
+  const cargarDatos = async () => {
+    try {
+      setLoading(true);
+      const [resVentas, resClientes, resProductos] = await Promise.all([
+        fetch(`${API_URL}/ventas`).then(r => r.json()),
+        fetch(`${API_URL}/clientes`).then(r => r.json()),
+        fetch(`${API_URL}/productos`).then(r => r.json())
+      ]);
+      
+      setVentas(resVentas || []);
+      setClientes(resClientes || []);
+      setProductos(resProductos || []);
+    } catch (error) {
+      console.error('Error cargando datos:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const abrirModal = (tipo, venta = null, index = null) => {
     setModalType(tipo);
     setVentaIndex(index);
+
+    // SIEMPRE usar fecha actual
+    const fechaActual = new Date().toISOString().split('T')[0];
 
     if (venta) {
       setFormData({
         _id: venta._id,
         clienteId: venta.cliente._id,
-        fecha: venta.fecha.split('T')[0],
-        metodoPago: venta.metodoPago || ''
+        fecha: fechaActual, // Fecha actual bloqueada
+        metodoPago: venta.metodoPago || 'Efectivo'
       });
       setProductosVenta(
         venta.items.map(item => ({
@@ -42,8 +72,8 @@ const Ventas = ({ ventas, clientes, productos, cargarDatos }) => {
     } else {
       setFormData({ 
         clienteId: '', 
-        fecha: new Date().toISOString().split('T')[0],
-        metodoPago: ''
+        fecha: fechaActual, // Fecha actual por defecto
+        metodoPago: 'Efectivo'
       });
       setProductosVenta([]);
     }
@@ -107,7 +137,7 @@ const Ventas = ({ ventas, clientes, productos, cargarDatos }) => {
 
     const ventaData = {
       cliente: formData.clienteId,
-      fecha: formData.fecha,
+      fecha: formData.fecha, // Fecha actual del sistema
       metodoPago: formData.metodoPago || 'efectivo',
       items: productosVenta.map(item => ({
         producto: item.productoId,
@@ -195,6 +225,17 @@ const Ventas = ({ ventas, clientes, productos, cargarDatos }) => {
     return cumpleBusqueda && cumpleCliente && cumpleFechaDesde && 
            cumpleFechaHasta && cumpleMontoMin && cumpleMontoMax;
   });
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-orange-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600 font-semibold">Cargando ventas...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -570,15 +611,23 @@ const Ventas = ({ ventas, clientes, productos, cargarDatos }) => {
                 <div>
                   <label className="block text-sm font-bold text-gray-700 mb-2">
                     <Calendar className="inline mr-2" size={16} />
-                    Fecha *
+                    Fecha (Automática)
                   </label>
                   <input
                     type="date"
                     value={formData.fecha || ''}
-                    onChange={(e) => setFormData({...formData, fecha: e.target.value})}
-                    className="w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-all"
-                    required
+                    className="w-full p-3 border-2 border-gray-300 rounded-lg bg-gray-100 text-gray-600 cursor-not-allowed"
+                    disabled
+                    title="La fecha se establece automáticamente al día actual"
                   />
+                  <p className="text-xs text-gray-500 mt-1">
+                    📅 {new Date(formData.fecha).toLocaleDateString('es-ES', { 
+                      weekday: 'long', 
+                      year: 'numeric', 
+                      month: 'long', 
+                      day: 'numeric' 
+                    })}
+                  </p>
                 </div>
               </div>
 
