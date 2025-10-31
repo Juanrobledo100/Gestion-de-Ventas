@@ -2,7 +2,15 @@ const Categoria = require('../models/categoria.model');
 
 exports.getAll = async (req, res) => {
   try {
-    const categorias = await Categoria.find();
+    const { nombre, sort = 'nombre' } = req.query;
+    const filter = {};
+    
+    // Filtro por nombre (búsqueda parcial)
+    if (nombre) {
+      filter.nombre = { $regex: nombre, $options: 'i' };
+    }
+
+    const categorias = await Categoria.find(filter).sort(sort);
     res.json(categorias);
   } catch (err) {
     res.status(500).json({ error: err.message });

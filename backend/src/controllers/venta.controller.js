@@ -3,14 +3,46 @@ const Producto = require('../models/producto.model');
 
 exports.getAll = async (req, res) => {
   try {
-    const { start, end, clienteId } = req.query;
+    const { 
+      start, 
+      end, 
+      clienteId, 
+      metodoPago, 
+      montoMin, 
+      montoMax,
+      sort = '-fecha' 
+    } = req.query;
+    
     const filter = {};
-    if (clienteId) filter.cliente = clienteId;
-    if (start || end) filter.fecha = {};
-    if (start) filter.fecha.$gte = new Date(start);
-    if (end) filter.fecha.$lte = new Date(end);
+    
+    // Filtro por cliente
+    if (clienteId) {
+      filter.cliente = clienteId;
+    }
+    
+    // Filtro por rango de fechas
+    if (start || end) {
+      filter.fecha = {};
+      if (start) filter.fecha.$gte = new Date(start);
+      if (end) filter.fecha.$lte = new Date(end);
+    }
+    
+    // Filtro por método de pago
+    if (metodoPago) {
+      filter.metodoPago = metodoPago;
+    }
+    
+    // Filtro por rango de monto total
+    if (montoMin || montoMax) {
+      filter.total = {};
+      if (montoMin) filter.total.$gte = parseFloat(montoMin);
+      if (montoMax) filter.total.$lte = parseFloat(montoMax);
+    }
 
-    const ventas = await Venta.find(filter).populate('cliente').populate('items.producto');
+    const ventas = await Venta.find(filter)
+      .populate('cliente')
+      .populate('items.producto')
+      .sort(sort);
     res.json(ventas);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -19,7 +51,9 @@ exports.getAll = async (req, res) => {
 
 exports.getById = async (req, res) => {
   try {
-    const venta = await Venta.findById(req.params.id).populate('cliente').populate('items.producto');
+    const venta = await Venta.findById(req.params.id)
+      .populate('cliente')
+      .populate('items.producto');
     if (!venta) return res.status(404).json({ error: 'Venta no encontrada' });
     res.json(venta);
   } catch (err) {
@@ -30,9 +64,10 @@ exports.getById = async (req, res) => {
 exports.create = async (req, res) => {
   try {
     const { cliente, items, metodoPago } = req.body;
-    if (!items || items.length === 0) return res.status(400).json({ error: 'La venta debe tener items' });
+    if (!items || items.length === 0) {
+      return res.status(400).json({ error: 'La venta debe tener items' });
+    }
 
-    // calcular subtotales y total
     let total = 0;
     const itemsProcesados = await Promise.all(items.map(async it => {
       const prod = await Producto.findById(it.producto);
@@ -40,7 +75,6 @@ exports.create = async (req, res) => {
       const precio = prod.precioUnitario || it.precioUnitario || 0;
       const subtotal = precio * it.cantidad;
       total += subtotal;
-      // actualizar stock
       prod.stock = Math.max(0, prod.stock - it.cantidad);
       await prod.save();
       return {
@@ -64,7 +98,7 @@ exports.update = async (req, res) => {
     const venta = await Venta.findById(req.params.id);
     if (!venta) return res.status(404).json({ error: 'Venta no encontrada' });
 
-    // restaurar stock de la venta anterior
+    // Restaurar stock de la venta anterior
     for (const it of venta.items) {
       const prod = await Producto.findById(it.producto);
       if (prod) {
@@ -73,7 +107,7 @@ exports.update = async (req, res) => {
       }
     }
 
-    // procesar nuevos items
+    // Procesar nuevos items
     const { cliente, items, metodoPago, fecha } = req.body;
     let total = 0;
     const itemsProcesados = await Promise.all(items.map(async it => {
@@ -104,7 +138,8 @@ exports.remove = async (req, res) => {
   try {
     const venta = await Venta.findById(req.params.id);
     if (!venta) return res.status(404).json({ error: 'Venta no encontrada' });
-    // restaurar stock
+    
+    // Restaurar stock
     for (const it of venta.items) {
       const prod = await Producto.findById(it.producto);
       if (prod) {
@@ -188,12 +223,27 @@ exports.topProductos = async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const agg = await Venta.aggregate([
       { $unwind: '$items' },
-      { $group: { _id: '$items.producto', cantidad: { $sum: '$items.cantidad' }, ventas: { $sum: '$items.subtotal' } } },
+      { $group: { 
+        _id: '$items.producto', 
+        cantidad: { $sum: '$items.cantidad' }, 
+        ventas: { $sum: '$items.subtotal' } 
+      }},
       { $sort: { cantidad: -1 } },
       { $limit: limit },
-      { $lookup: { from: 'productos', localField: '_id', foreignField: '_id', as: 'producto' } },
+      { $lookup: { 
+        from: 'productos', 
+        localField: '_id', 
+        foreignField: '_id', 
+        as: 'producto' 
+      }},
       { $unwind: '$producto' },
-      { $project: { _id: 0, productoId: '$_id', nombre: '$producto.nombre', cantidad: 1, ventas: 1 } }
+      { $project: { 
+        _id: 0, 
+        productoId: '$_id', 
+        nombre: '$producto.nombre', 
+        cantidad: 1, 
+        ventas: 1 
+      }}
     ]);
 
     res.json(agg);

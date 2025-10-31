@@ -1,16 +1,50 @@
 const Producto = require('../models/producto.model');
 
-// Obtener todos los productos
 exports.getAll = async (req, res) => {
   try {
-    const productos = await Producto.find().populate('categoria');
+    const { 
+      nombre, 
+      categoriaId, 
+      precioMin, 
+      precioMax, 
+      stockMin, 
+      stockMax,
+      sort = 'nombre' 
+    } = req.query;
+    
+    const filter = {};
+    
+    // Filtro por nombre (búsqueda parcial)
+    if (nombre) {
+      filter.nombre = { $regex: nombre, $options: 'i' };
+    }
+    
+    // Filtro por categoría
+    if (categoriaId) {
+      filter.categoria = categoriaId;
+    }
+    
+    // Filtros por rango de precio
+    if (precioMin || precioMax) {
+      filter.precioUnitario = {};
+      if (precioMin) filter.precioUnitario.$gte = parseFloat(precioMin);
+      if (precioMax) filter.precioUnitario.$lte = parseFloat(precioMax);
+    }
+    
+    // Filtros por rango de stock
+    if (stockMin || stockMax) {
+      filter.stock = {};
+      if (stockMin) filter.stock.$gte = parseInt(stockMin);
+      if (stockMax) filter.stock.$lte = parseInt(stockMax);
+    }
+
+    const productos = await Producto.find(filter).populate('categoria').sort(sort);
     res.json(productos);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
 
-// Obtener un producto por ID
 exports.getById = async (req, res) => {
   try {
     const prod = await Producto.findById(req.params.id).populate('categoria');
@@ -21,7 +55,6 @@ exports.getById = async (req, res) => {
   }
 };
 
-// Crear un nuevo producto
 exports.create = async (req, res) => {
   try {
     const { nombre, precio, stock, categoriaId, descripcion } = req.body;
@@ -35,7 +68,6 @@ exports.create = async (req, res) => {
     });
 
     await producto.save();
-    // Rellenar la categoría para que frontend pueda mostrar el nombre
     await producto.populate('categoria');
     res.status(201).json(producto);
   } catch (err) {
@@ -43,7 +75,6 @@ exports.create = async (req, res) => {
   }
 };
 
-// Actualizar un producto existente
 exports.update = async (req, res) => {
   try {
     const { nombre, precio, stock, categoriaId, descripcion } = req.body;
@@ -67,7 +98,6 @@ exports.update = async (req, res) => {
   }
 };
 
-// Eliminar un producto
 exports.remove = async (req, res) => {
   try {
     await Producto.findByIdAndDelete(req.params.id);

@@ -2,7 +2,21 @@ const Cliente = require('../models/cliente.model');
 
 exports.getAll = async (req, res) => {
   try {
-    const clientes = await Cliente.find().sort({ createdAt: -1 });
+    const { nombre, email, telefono, sort = '-createdAt' } = req.query;
+    const filter = {};
+    
+    // Filtros de búsqueda parcial
+    if (nombre) {
+      filter.nombre = { $regex: nombre, $options: 'i' };
+    }
+    if (email) {
+      filter.email = { $regex: email, $options: 'i' };
+    }
+    if (telefono) {
+      filter.telefono = { $regex: telefono, $options: 'i' };
+    }
+
+    const clientes = await Cliente.find(filter).sort(sort);
     res.json(clientes);
   } catch (err) {
     res.status(500).json({ error: err.message });

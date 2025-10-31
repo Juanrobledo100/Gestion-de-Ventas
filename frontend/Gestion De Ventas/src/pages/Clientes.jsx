@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Users, Plus, Edit, Trash2, Save, X, Mail, Phone, MapPin } from 'lucide-react';
+import { Users, Plus, Edit, Trash2, Save, X, Mail, Phone, MapPin, Search, SlidersHorizontal, XCircle } from 'lucide-react';
 
 const API_URL = 'http://localhost:5000/api';
 
@@ -7,6 +7,13 @@ const Clientes = ({ clientes, cargarDatos }) => {
   const [showModal, setShowModal] = useState(false);
   const [modalType, setModalType] = useState('add');
   const [formData, setFormData] = useState({});
+  
+  // Estados de filtros
+  const [filtros, setFiltros] = useState({
+    nombre: '',
+    email: '',
+    telefono: ''
+  });
 
   const abrirModal = (tipo, cliente = null) => {
     setModalType(tipo);
@@ -52,80 +59,236 @@ const Clientes = ({ clientes, cargarDatos }) => {
     }
   };
 
+  const limpiarFiltros = () => {
+    setFiltros({ nombre: '', email: '', telefono: '' });
+  };
+
+  const hayFiltrosActivos = filtros.nombre !== '' || filtros.email !== '' || filtros.telefono !== '';
+
+  // Aplicar filtros
+  const clientesFiltrados = clientes.filter(cliente => {
+    const cumpleNombre = !filtros.nombre || 
+      cliente.nombre.toLowerCase().includes(filtros.nombre.toLowerCase());
+    const cumpleEmail = !filtros.email || 
+      cliente.email.toLowerCase().includes(filtros.email.toLowerCase());
+    const cumpleTelefono = !filtros.telefono || 
+      cliente.telefono.includes(filtros.telefono);
+    
+    return cumpleNombre && cumpleEmail && cumpleTelefono;
+  });
+
   return (
     <>
-      <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-        {/* Header responsive */}
-        <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-gray-200 bg-gradient-to-r from-blue-500 to-blue-600 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0">
+      {/* BARRA DE FILTROS PROFESIONAL */}
+      <div className="mb-6">
+        <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl shadow-md border border-blue-200 p-4 sm:p-6">
+          {/* Header de filtros */}
+          <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="bg-blue-600 p-2 rounded-lg">
+                <SlidersHorizontal className="text-white" size={20} />
+              </div>
+              <div>
+                <h3 className="font-bold text-gray-800 text-lg">Filtros de Búsqueda</h3>
+                <p className="text-sm text-gray-600">Busca clientes por nombre, email o teléfono</p>
+              </div>
+            </div>
+            
+            <button
+              onClick={() => abrirModal('add')}
+              className="w-full lg:w-auto bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 flex items-center justify-center shadow-lg hover:shadow-xl transition-all"
+            >
+              <Plus className="mr-2" size={20} />
+              Nuevo Cliente
+            </button>
+          </div>
+
+          {/* Campos de filtro */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="relative">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <Users className="inline mr-1" size={16} />
+                Nombre
+              </label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                <input
+                  type="text"
+                  placeholder="Buscar por nombre..."
+                  value={filtros.nombre}
+                  onChange={(e) => setFiltros({...filtros, nombre: e.target.value})}
+                  className="w-full pl-10 pr-10 py-2.5 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                />
+                {filtros.nombre && (
+                  <button
+                    onClick={() => setFiltros({...filtros, nombre: ''})}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    <XCircle size={18} />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div className="relative">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <Mail className="inline mr-1" size={16} />
+                Email
+              </label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                <input
+                  type="text"
+                  placeholder="Buscar por email..."
+                  value={filtros.email}
+                  onChange={(e) => setFiltros({...filtros, email: e.target.value})}
+                  className="w-full pl-10 pr-10 py-2.5 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                />
+                {filtros.email && (
+                  <button
+                    onClick={() => setFiltros({...filtros, email: ''})}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    <XCircle size={18} />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div className="relative">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <Phone className="inline mr-1" size={16} />
+                Teléfono
+              </label>
+              <div className="relative">
+                <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                <input
+                  type="text"
+                  placeholder="Buscar por teléfono..."
+                  value={filtros.telefono}
+                  onChange={(e) => setFiltros({...filtros, telefono: e.target.value})}
+                  className="w-full pl-10 pr-10 py-2.5 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                />
+                {filtros.telefono && (
+                  <button
+                    onClick={() => setFiltros({...filtros, telefono: ''})}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    <XCircle size={18} />
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Botón limpiar filtros */}
+          {hayFiltrosActivos && (
+            <div className="mt-4">
+              <button
+                onClick={limpiarFiltros}
+                className="bg-white border-2 border-gray-300 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-50 font-semibold flex items-center transition-all"
+              >
+                <XCircle className="mr-2" size={18} />
+                Limpiar Filtros
+              </button>
+            </div>
+          )}
+
+          {/* Resultados */}
+          <div className="mt-4 pt-4 border-t border-blue-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-semibold text-gray-700">Resultados:</span>
+              <span className="bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-bold">
+                {clientesFiltrados.length}
+              </span>
+              <span className="text-sm text-gray-600">de {clientes.length} clientes</span>
+            </div>
+            
+            {hayFiltrosActivos && (
+              <div className="flex items-center gap-2 text-sm">
+                <span className="text-gray-600">Filtros activos:</span>
+                <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full font-semibold">
+                  {Object.values(filtros).filter(v => v !== '').length}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100">
+        {/* Header */}
+        <div className="px-4 sm:px-6 py-4 sm:py-5 bg-gradient-to-r from-blue-500 to-blue-600">
           <h3 className="text-xl sm:text-2xl font-bold text-white flex items-center">
-            <Users className="mr-2 sm:mr-3" size={20} />
-            <span className="hidden sm:inline">Listado de Clientes</span>
-            <span className="sm:hidden">Clientes</span>
+            <Users className="mr-2 sm:mr-3" size={24} />
+            <span>Listado de Clientes</span>
           </h3>
-          <button
-            onClick={() => abrirModal('add')}
-            className="bg-white text-blue-600 px-3 sm:px-4 py-2 rounded-lg font-semibold hover:bg-blue-50 flex items-center text-sm sm:text-base w-full sm:w-auto justify-center"
-          >
-            <Plus className="mr-2" size={18} />
-            Agregar Cliente
-          </button>
         </div>
 
         {/* Vista de TARJETAS para móvil */}
         <div className="md:hidden">
-          {clientes.length === 0 ? (
-            <div className="text-center py-12 text-gray-500">
-              <Users size={48} className="mx-auto mb-4 text-gray-400" />
-              <p className="text-sm">No hay clientes registrados</p>
+          {clientesFiltrados.length === 0 ? (
+            <div className="text-center py-16 bg-gray-50">
+              <div className="bg-gray-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Users size={40} className="text-gray-400" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-800 mb-2">No se encontraron clientes</h3>
+              <p className="text-gray-600 mb-6">Intenta ajustar los filtros de búsqueda</p>
+              {hayFiltrosActivos && (
+                <button
+                  onClick={limpiarFiltros}
+                  className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 font-semibold inline-flex items-center"
+                >
+                  <XCircle className="mr-2" size={18} />
+                  Limpiar Filtros
+                </button>
+              )}
             </div>
           ) : (
             <div className="p-4 space-y-4">
-              {clientes.map((cliente) => (
+              {clientesFiltrados.map((cliente) => (
                 <div
                   key={cliente._id}
-                  className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow"
+                  className="bg-white border-2 border-gray-100 rounded-xl p-4 shadow-sm hover:shadow-lg hover:border-blue-200 transition-all"
                 >
-                  {/* Nombre */}
                   <div className="mb-3">
                     <h4 className="font-bold text-gray-900 text-lg mb-2">
                       {cliente.nombre}
                     </h4>
                   </div>
 
-                  {/* Detalles con iconos */}
                   <div className="space-y-2 mb-3 text-sm">
                     {cliente.email && (
-                      <div className="flex items-center text-gray-600">
+                      <div className="flex items-center text-gray-600 bg-gray-50 p-2 rounded-lg">
                         <Mail size={16} className="mr-2 text-blue-500 flex-shrink-0" />
                         <span className="truncate">{cliente.email}</span>
                       </div>
                     )}
                     {cliente.telefono && (
-                      <div className="flex items-center text-gray-600">
+                      <div className="flex items-center text-gray-600 bg-gray-50 p-2 rounded-lg">
                         <Phone size={16} className="mr-2 text-blue-500 flex-shrink-0" />
                         <span>{cliente.telefono}</span>
                       </div>
                     )}
                     {cliente.direccion && (
-                      <div className="flex items-start text-gray-600">
+                      <div className="flex items-start text-gray-600 bg-gray-50 p-2 rounded-lg">
                         <MapPin size={16} className="mr-2 text-blue-500 flex-shrink-0 mt-0.5" />
                         <span className="flex-1">{cliente.direccion}</span>
                       </div>
                     )}
                   </div>
 
-                  {/* Botones de acción */}
                   <div className="flex gap-2 pt-3 border-t border-gray-100">
                     <button
                       onClick={() => abrirModal('edit', cliente)}
-                      className="flex-1 bg-blue-50 text-blue-600 py-2 rounded-lg hover:bg-blue-100 flex items-center justify-center font-semibold text-sm"
+                      className="flex-1 bg-blue-50 text-blue-600 py-2.5 rounded-lg hover:bg-blue-100 flex items-center justify-center font-semibold text-sm transition-all"
                     >
                       <Edit size={16} className="mr-2" />
                       Editar
                     </button>
                     <button
                       onClick={() => eliminarCliente(cliente._id)}
-                      className="flex-1 bg-red-50 text-red-600 py-2 rounded-lg hover:bg-red-100 flex items-center justify-center font-semibold text-sm"
+                      className="flex-1 bg-red-50 text-red-600 py-2.5 rounded-lg hover:bg-red-100 flex items-center justify-center font-semibold text-sm transition-all"
                     >
                       <Trash2 size={16} className="mr-2" />
                       Eliminar
@@ -142,15 +305,15 @@ const Clientes = ({ clientes, cargarDatos }) => {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Nombre</th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Email</th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Teléfono</th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Dirección</th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Acciones</th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Nombre</th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Email</th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Teléfono</th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Dirección</th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Acciones</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {clientes.map((cliente) => (
+              {clientesFiltrados.map((cliente) => (
                 <tr key={cliente._id} className="hover:bg-blue-50 transition-colors">
                   <td className="px-6 py-4 text-sm font-semibold text-gray-900">{cliente.nombre}</td>
                   <td className="px-6 py-4 text-sm text-gray-600">{cliente.email}</td>
@@ -159,14 +322,14 @@ const Clientes = ({ clientes, cargarDatos }) => {
                   <td className="px-6 py-4 text-sm flex gap-2">
                     <button 
                       onClick={() => abrirModal('edit', cliente)} 
-                      className="text-blue-600 hover:text-blue-800"
+                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
                       title="Editar"
                     >
                       <Edit size={18} />
                     </button>
                     <button 
                       onClick={() => eliminarCliente(cliente._id)} 
-                      className="text-red-600 hover:text-red-800"
+                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-all"
                       title="Eliminar"
                     >
                       <Trash2 size={18} />
@@ -177,75 +340,116 @@ const Clientes = ({ clientes, cargarDatos }) => {
             </tbody>
           </table>
 
-          {clientes.length === 0 && (
-            <div className="text-center py-12 text-gray-500">
-              <Users size={48} className="mx-auto mb-4 text-gray-400" />
-              <p className="text-base">No hay clientes registrados</p>
+          {clientesFiltrados.length === 0 && (
+            <div className="text-center py-16 bg-gray-50">
+              <div className="bg-gray-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Users size={40} className="text-gray-400" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-800 mb-2">No se encontraron clientes</h3>
+              <p className="text-gray-600 mb-6">Intenta ajustar los filtros de búsqueda</p>
+              {hayFiltrosActivos && (
+                <button
+                  onClick={limpiarFiltros}
+                  className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 font-semibold inline-flex items-center"
+                >
+                  <XCircle className="mr-2" size={18} />
+                  Limpiar Filtros
+                </button>
+              )}
             </div>
           )}
         </div>
       </div>
 
-      {/* Modal responsive */}
+      {/* Modal MEJORADO */}
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg p-6 sm:p-8 max-w-md w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-4 sm:mb-6">
-              <h2 className="text-xl sm:text-2xl font-bold">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl p-6 sm:p-8 max-w-md w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-blue-600 flex items-center gap-2">
+                <Users size={28} />
                 {modalType === 'add' ? 'Agregar' : 'Editar'} Cliente
               </h2>
               <button 
                 onClick={() => setShowModal(false)} 
-                className="text-gray-500 hover:text-gray-700 p-1"
+                className="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-100 rounded-lg transition-all"
               >
                 <X size={24} />
               </button>
             </div>
-            <form onSubmit={handleSubmit}>
-              <input
-                placeholder="Nombre completo"
-                value={formData.nombre}
-                onChange={(e) => setFormData({...formData, nombre: e.target.value})}
-                className="w-full mb-3 sm:mb-4 p-2.5 sm:p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
-                required
-              />
-              <input
-                type="email"
-                placeholder="Email"
-                value={formData.email}
-                onChange={(e) => setFormData({...formData, email: e.target.value})}
-                className="w-full mb-3 sm:mb-4 p-2.5 sm:p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
-                required
-              />
-              <input
-                placeholder="Teléfono"
-                value={formData.telefono}
-                onChange={(e) => setFormData({...formData, telefono: e.target.value})}
-                className="w-full mb-3 sm:mb-4 p-2.5 sm:p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
-              />
-              <input
-                placeholder="Dirección"
-                value={formData.direccion}
-                onChange={(e) => setFormData({...formData, direccion: e.target.value})}
-                className="w-full mb-4 sm:mb-6 p-2.5 sm:p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
-              />
-              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+            
+            <div className="space-y-5">
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">
+                  <Users className="inline mr-2" size={16} />
+                  Nombre completo *
+                </label>
+                <input
+                  placeholder="Ej: Juan Pérez"
+                  value={formData.nombre}
+                  onChange={(e) => setFormData({...formData, nombre: e.target.value})}
+                  className="w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">
+                  <Mail className="inline mr-2" size={16} />
+                  Email *
+                </label>
+                <input
+                  type="email"
+                  placeholder="juan@email.com"
+                  value={formData.email}
+                  onChange={(e) => setFormData({...formData, email: e.target.value})}
+                  className="w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">
+                  <Phone className="inline mr-2" size={16} />
+                  Teléfono
+                </label>
+                <input
+                  placeholder="351-123-4567"
+                  value={formData.telefono}
+                  onChange={(e) => setFormData({...formData, telefono: e.target.value})}
+                  className="w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">
+                  <MapPin className="inline mr-2" size={16} />
+                  Dirección
+                </label>
+                <input
+                  placeholder="Calle 123, Tucumán"
+                  value={formData.direccion}
+                  onChange={(e) => setFormData({...formData, direccion: e.target.value})}
+                  className="w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                />
+              </div>
+
+              <div className="flex gap-3 pt-4">
                 <button 
-                  type="submit" 
-                  className="flex-1 bg-blue-600 text-white py-2.5 sm:py-3 rounded-lg hover:bg-blue-700 flex items-center justify-center font-semibold text-sm sm:text-base"
+                  onClick={handleSubmit}
+                  className="flex-1 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 flex items-center justify-center font-semibold shadow-lg hover:shadow-xl transition-all"
                 >
                   <Save className="mr-2" size={18} />
                   Guardar
                 </button>
                 <button 
-                  type="button" 
-                  onClick={() => setShowModal(false)} 
-                  className="flex-1 bg-gray-300 text-gray-700 py-2.5 sm:py-3 rounded-lg hover:bg-gray-400 font-semibold text-sm sm:text-base"
+                  onClick={() => setShowModal(false)}
+                  className="flex-1 bg-gray-200 text-gray-700 py-3 rounded-lg hover:bg-gray-300 font-semibold transition-all"
                 >
                   Cancelar
                 </button>
               </div>
-            </form>
+            </div>
           </div>
         </div>
       )}
